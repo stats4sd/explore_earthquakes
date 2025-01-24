@@ -310,5 +310,4 @@ colnames(table_stat)[1]<-name
   
 }
 
-if (interactive())
-  shinyApp(ui, server)
+shinyApp(ui, server)
