@@ -10,12 +10,13 @@ library(gt)
 library(Hmisc)
 
 quakes<-readRDS("quakes.RDS")
- 
+ source("html.R")
 ui <- dashboardPage(
   
   dashboardHeader(title = "Earthquakes!"),
   dashboardSidebar(
     sidebarMenu(
+   menuItem("Introduction", tabName = "Intro"),
     menuItem("View", tabName = "view"),
     menuItem("Summarise", tabName = "summary"),
     menuItem("Visualise", tabName = "plot"),
@@ -24,8 +25,9 @@ ui <- dashboardPage(
     ),
   dashboardBody(
     tabItems(
-      # First tab content
-tabItem(tabName = "filter",
+      tabItem(tabName = "Intro",
+              HTML(html1)),
+              tabItem(tabName = "filter",
   tags$h2("Filter data"),
   fluidRow(
     column(
@@ -62,17 +64,22 @@ tabItem(tabName = "plot",
         conditionalPanel("input.plot_type=='scatter'|input.plot_type=='mean_se'|input.plot_type=='boxplot'|input.plot_type=='violin'",
                          selectInput("x",label="X axis variable",choices=c("None",colnames(quakes)))),
         selectInput("plot_type",label="Type of plot",
-                    choices=c("scatter","boxplot","histogram","violin","density","mean_se")),
-        conditionalPanel("input.plot_type=='scatter'|input.plot_type=='mean_se'|input.plot_type=='boxplot'|input.plot_type=='violin'",
+                    choices=c("Scatterplot"="scatter","Boxplot"="boxplot",
+                    "Histogram"="histogram","Density"="density","Mean + Errorbars"="mean_se")),
+        conditionalPanel("input.plot_type=='scatter'|input.plot_type=='mean_se'",
               checkboxInput("smooth","Add Trend Line?")
         )
           ),
         column(  width = 6,
                  conditionalPanel("input.plot_type=='scatter'",
         selectInput("colour",label="colour variable",choices=c("None",colnames(quakes))),
+        conditionalPanel("input.colour!='None'",
+                         selectInput("palette",label="Colour Scheme",
+                                     choices = c("Reds"="Reds","Blues"="Blues","Greens"="Greens",
+                                                 "Rainbow"="Spectral","Traffic Lights"="RdYlGn"))),
         selectInput("size",label="size variable",c("None",colnames(quakes)))),
-        selectInput("transform_y",label="transform y variable?",choices=c("No","log")),
-        conditionalPanel("input.plot_type=='scatter'",
+        conditionalPanel("input.y!='lat'",selectInput("transform_y",label="transform y variable?",choices=c("No","log"))),
+        conditionalPanel("input.plot_type=='scatter' & input.x!='lat'",
                          selectInput("transform_x",label="transform x variable?",choices=c("No","log"))),
         )
         ),
@@ -206,6 +213,7 @@ colnames(table_stat)[1]<-name
       gt::fmt_number()
     
   })
+
   
   output$plot1<-renderPlotly({
     if(nrow(res_filter$filtered()>0)){
@@ -226,13 +234,13 @@ colnames(table_stat)[1]<-name
         {if(input$colour!="None")  geom_point(aes(colour=colour))}+
         {if(input$colour=="None")  geom_point()}+
         scale_size_continuous(range=c(0.25,2))+
-        {if(is.numeric(data$colour)) scale_colour_distiller(palette="Reds",direction=1)}+
-        {if(!is.numeric(data$colour)) scale_colour_brewer(palette="Dark2",direction=1)}+
+        {if(is.numeric(data$colour)) scale_colour_distiller(palette=input$palette,direction=1)}+
+        {if(!is.numeric(data$colour)) scale_colour_brewer(palette=input$palette,direction=1)}+
         labs(x=input$x,y=input$y)+
         {if(input$colour!="None")    labs(colour=input$colour)}+
         {if(input$size!="None")    labs(size=input$size)}+
-        {if(input$transform_x=="log"& class(data$x)%in%c("numeric","integer"))  scale_x_log10()}+
-        {if(input$transform_y=="log" ) scale_y_log10() }
+        {if(input$transform_x=="log"& class(data$x)%in%c("numeric","integer")& input$y!="lat" )  scale_x_log10()}+
+        {if(input$transform_y=="log" & input$y!="lat" ) scale_y_log10() }
       
       if(input$smooth==TRUE){
         p1<-p1+geom_smooth(aes(x=as.numeric(x),group=1),size=0.5,alpha=0.5,se=FALSE,colour="red")
@@ -255,8 +263,8 @@ colnames(table_stat)[1]<-name
       p1<-ggplot(data,aes(x=x,y=y,group=x,colour=colour))+
            geom_boxplot() +
         labs(x=input$x,y=input$y)+
-        {if(class(data$colour)=="numeric") scale_colour_distiller(palette="Reds",direction=1)}+
-        {if(class(data$colour)!="numeric") scale_colour_brewer(palette="Dark2",direction=1)}+
+        {if(class(data$colour)=="numeric") scale_colour_distiller(palette=input$palette,direction=1)}+
+        {if(class(data$colour)!="numeric") scale_colour_brewer(palette=input$palette,direction=1)}+
         labs(x=input$x,y=input$y)+
         {if(input$colour!="None")    labs(colour=input$colour)}+
         {if(input$size!="None")    labs(size=input$size)}+
@@ -269,8 +277,8 @@ colnames(table_stat)[1]<-name
       p1<-ggplot(data,aes(x=x,y=y,group=x,colour=colour))+
            geom_violin() +
         labs(x=input$x,y=input$y)+
-        {if(class(data$colour)=="numeric") scale_colour_distiller(palette="Reds",direction=1)}+
-        {if(class(data$colour)!="numeric") scale_colour_brewer(palette="Dark2",direction=1)}+
+        {if(class(data$colour)=="numeric") scale_colour_distiller(palette=input$palette,direction=1)}+
+        {if(class(data$colour)!="numeric") scale_colour_brewer(palette=input$palette,direction=1)}+
         labs(x=input$x,y=input$y)+
         {if(input$colour!="None")    labs(colour=input$colour)}+
         {if(input$size!="None")    labs(size=input$size)+
@@ -285,8 +293,8 @@ colnames(table_stat)[1]<-name
         stat_summary(fun.data=mean_cl_normal,
                      conf.int=0.95) +
         labs(x=input$x,y=input$y)+
-        {if(class(data$colour)=="numeric"|class(data$colour)=="integer") scale_colour_distiller(palette="Reds",direction=1)}+
-        {if(class(data$colour)!="numeric"& class(data$colour)!="integer") scale_colour_brewer(palette="Dark2",direction=1)}+
+        {if(class(data$colour)=="numeric"|class(data$colour)=="integer") scale_colour_distiller(palette=input$palette,direction=1)}+
+        {if(class(data$colour)!="numeric"& class(data$colour)!="integer") scale_colour_brewer(palette=input$palette,direction=1)}+
         labs(x=input$x,y=input$y)+
         {if(input$colour!="None")    labs(colour=input$colour)}+
         {if(input$size!="None")    labs(size=input$size)+
