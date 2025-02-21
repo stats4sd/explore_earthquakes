@@ -61,8 +61,8 @@ tabItem(tabName = "plot",
         fluidRow(
           column(  width = 6,
         selectInput("y",label="Y axis variable",choices=colnames(quakes),selected="mag"),
-        conditionalPanel("input.plot_type=='scatter'|input.plot_type=='mean_se'|input.plot_type=='boxplot'|input.plot_type=='violin'",
-                         selectInput("x",label="X axis variable",choices=c("None",colnames(quakes)))),
+        conditionalPanel("input.plot_type=='scatter'|input.plot_type=='mean_se'|input.plot_type=='boxplot'",
+                         selectInput("x",label="X axis variable",choices="None")),
         selectInput("plot_type",label="Type of plot",
                     choices=c("Scatterplot"="scatter","Boxplot"="boxplot",
                     "Histogram"="histogram","Density"="density","Mean + Errorbars"="mean_se")),
@@ -138,7 +138,12 @@ NULL
 
 res_filter$filtered <- reactive(data_inline_r())
 
+
+
+
 updateSelectInput(session = session,"x",choices=c("None",colnames(data_inline_r())))
+
+
 updateSelectInput(session = session,"colour",choices=c("None",colnames(data_inline_r())))
 
 updateSelectInput(session = session,"table_var",choices=c(colnames(data_inline_r())))
@@ -214,8 +219,7 @@ colnames(table_stat)[1]<-name
     
   })
 
-  
-  output$plot1<-renderPlotly({
+output$plot1<-renderPlotly({
     if(nrow(res_filter$filtered()>0)){
       data<-res_filter$filtered()
     }else{
