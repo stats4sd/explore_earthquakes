@@ -68,7 +68,10 @@ tabItem(tabName = "plot",
                     "Histogram"="histogram","Density"="density","Mean + Errorbars"="mean_se")),
         conditionalPanel("input.plot_type=='scatter'",
               checkboxInput("smooth","Add Trend Line?")
-        )
+        ),
+        conditionalPanel("input.plot_type=='histogram'",
+                         numericInput("bins","Number of bins",value = 20,min=10,max=100)
+        ),
           ),
         column(  width = 6,
                  conditionalPanel("input.plot_type=='scatter'",
@@ -81,6 +84,7 @@ tabItem(tabName = "plot",
         conditionalPanel("input.y!='lat'",selectInput("transform_y",label="transform y variable?",choices=c("No","log"))),
         conditionalPanel("input.plot_type=='scatter' & input.x!='lat'",
                          selectInput("transform_x",label="transform x variable?",choices=c("No","log"))),
+        selectInput("bg",label="Background",choices=c("white","grey","dark"))
         )
         ),
         plotlyOutput("plot1")
@@ -253,7 +257,7 @@ output$plot1<-renderPlotly({
     
     if(input$plot_type=="histogram"){
       p1<-ggplot(data,aes(x=y))+
-           geom_histogram() +
+           geom_histogram(bins = as.numeric(input$bins)) +
         labs(y=input$x)+
           {if(input$transform_y=="log") scale_x_log10() }
     }
@@ -307,11 +311,19 @@ output$plot1<-renderPlotly({
         #                   size=0.5,alpha=0.5,se=FALSE,colour="red")
       }
     }
-    
-    (p1 + 
-      theme_light()) %>%
-      ggplotly()
-    
+    if(input$bg=="white"){
+   p1<- (p1 + 
+      theme_light()) 
+    }
+    if(input$bg=="grey"){
+      p1<- (p1 + 
+              theme_grey()) 
+    }
+    if(input$bg=="dark"){
+      p1<- (p1 + 
+              theme_dark()) 
+    }
+    ggplotly(p1)
   })
   
   
