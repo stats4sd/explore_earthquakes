@@ -66,7 +66,7 @@ tabItem(tabName = "plot",
         selectInput("plot_type",label="Type of plot",
                     choices=c("Scatterplot"="scatter","Boxplot"="boxplot",
                     "Histogram"="histogram","Density"="density","Mean + Errorbars"="mean_se")),
-        conditionalPanel("input.plot_type=='scatter'|input.plot_type=='mean_se'",
+        conditionalPanel("input.plot_type=='scatter'",
               checkboxInput("smooth","Add Trend Line?")
         )
           ),
@@ -235,13 +235,13 @@ output$plot1<-renderPlotly({
    
     if(input$plot_type=="scatter"){
       p1<-ggplot(data,aes(x=x,y=y,size=size))+
-        {if(input$colour!="None")  geom_point(aes(colour=colour))}+
-        {if(input$colour=="None")  geom_point()}+
+        {if(input$colour!="None")  geom_point(aes(fill=colour),shape=21,alpha=0.75,stroke=0.5)}+
+        {if(input$colour=="None")  geom_point(shape=21,alpha=0.75,stroke=0.5)}+
         scale_size_continuous(range=c(0.25,2))+
-        {if(is.numeric(data$colour)) scale_colour_distiller(palette=input$palette,direction=1)}+
-        {if(!is.numeric(data$colour)) scale_colour_brewer(palette=input$palette,direction=1)}+
+        {if(is.numeric(data$colour)) scale_fill_distiller(palette=input$palette,direction=1)}+
+        {if(!is.numeric(data$colour)) scale_fill_brewer(palette=input$palette,direction=1)}+
         labs(x=input$x,y=input$y)+
-        {if(input$colour!="None")    labs(colour=input$colour)}+
+        {if(input$colour!="None")    labs(fill=input$colour)}+
         {if(input$size!="None")    labs(size=input$size)}+
         {if(input$transform_x=="log"& class(data$x)%in%c("numeric","integer")& input$y!="lat" )  scale_x_log10()}+
         {if(input$transform_y=="log" & input$y!="lat" ) scale_y_log10() }
@@ -293,19 +293,18 @@ output$plot1<-renderPlotly({
       }
     }
     if(input$plot_type=="mean_se"){
-      p1<-ggplot(data,aes(x=x,y=y,group=x,colour=colour))+
+      p1<-ggplot(data,aes(x=x,y=y,group=x))+
         stat_summary(fun.data=mean_cl_normal,
                      conf.int=0.95) +
         labs(x=input$x,y=input$y)+
-        {if(class(data$colour)=="numeric"|class(data$colour)=="integer") scale_colour_distiller(palette=input$palette,direction=1)}+
-        {if(class(data$colour)!="numeric"& class(data$colour)!="integer") scale_colour_brewer(palette=input$palette,direction=1)}+
         labs(x=input$x,y=input$y)+
         {if(input$colour!="None")    labs(colour=input$colour)}+
         {if(input$size!="None")    labs(size=input$size)+
             {if(input$transform_y=="log") scale_y_log10() }}
       
       if(input$smooth==TRUE){
-        p1<-p1+geom_smooth(aes(x=as.numeric(x),group=1),size=0.5,alpha=0.5,se=FALSE,colour="red")
+       # p1<-p1+geom_smooth(aes(x=as.numeric(x),group=1),
+        #                   size=0.5,alpha=0.5,se=FALSE,colour="red")
       }
     }
     
