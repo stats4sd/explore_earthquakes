@@ -74,7 +74,7 @@ tabItem(tabName = "plot",
                  conditionalPanel("input.plot_type=='scatter'",
         selectInput("colour",label="colour variable",choices=c("None",colnames(quakes))),
         conditionalPanel("input.colour!='None'",
-                         selectInput("palette",label="Colour Scheme",
+                         selectInput("palette",label="Colour Scheme (for numeric variables)",
                                      choices = c("Reds"="Reds","Blues"="Blues","Greens"="Greens",
                                                  "Rainbow"="Spectral","Traffic Lights"="RdYlGn"))),
         selectInput("size",label="size variable",c("None",colnames(quakes)))),
@@ -235,13 +235,13 @@ output$plot1<-renderPlotly({
    
     if(input$plot_type=="scatter"){
       p1<-ggplot(data,aes(x=x,y=y,size=size))+
-        {if(input$colour!="None")  geom_point(aes(fill=colour),shape=21,alpha=0.75,stroke=0.5)}+
-        {if(input$colour=="None")  geom_point(shape=21,alpha=0.75,stroke=0.5)}+
+        {if(input$colour!="None")  geom_point(aes(colour=colour))}+
+        {if(input$colour=="None")  geom_point()}+
         scale_size_continuous(range=c(0.25,2))+
-        {if(is.numeric(data$colour)) scale_fill_distiller(palette=input$palette,direction=1)}+
-        {if(!is.numeric(data$colour)) scale_fill_brewer(palette=input$palette,direction=1)}+
+        {if(is.numeric(data$colour)) scale_colour_distiller(palette=input$palette,direction=1)}+
+        {if(!is.numeric(data$colour)) scale_colour_brewer(palette="Dark2",direction=1)}+
         labs(x=input$x,y=input$y)+
-        {if(input$colour!="None")    labs(fill=input$colour)}+
+        {if(input$colour!="None")    labs(colour=input$colour)}+
         {if(input$size!="None")    labs(size=input$size)}+
         {if(input$transform_x=="log"& class(data$x)%in%c("numeric","integer")& input$y!="lat" )  scale_x_log10()}+
         {if(input$transform_y=="log" & input$y!="lat" ) scale_y_log10() }
@@ -268,7 +268,7 @@ output$plot1<-renderPlotly({
            geom_boxplot() +
         labs(x=input$x,y=input$y)+
         {if(class(data$colour)=="numeric") scale_colour_distiller(palette=input$palette,direction=1)}+
-        {if(class(data$colour)!="numeric") scale_colour_brewer(palette=input$palette,direction=1)}+
+        {if(class(data$colour)!="numeric") scale_colour_brewer(palette="Dark2",direction=1)}+
         labs(x=input$x,y=input$y)+
         {if(input$colour!="None")    labs(colour=input$colour)}+
         {if(input$size!="None")    labs(size=input$size)}+
@@ -282,7 +282,7 @@ output$plot1<-renderPlotly({
            geom_violin() +
         labs(x=input$x,y=input$y)+
         {if(class(data$colour)=="numeric") scale_colour_distiller(palette=input$palette,direction=1)}+
-        {if(class(data$colour)!="numeric") scale_colour_brewer(palette=input$palette,direction=1)}+
+        {if(class(data$colour)!="numeric") scale_colour_brewer(palette="Dark2",direction=1)}+
         labs(x=input$x,y=input$y)+
         {if(input$colour!="None")    labs(colour=input$colour)}+
         {if(input$size!="None")    labs(size=input$size)+
